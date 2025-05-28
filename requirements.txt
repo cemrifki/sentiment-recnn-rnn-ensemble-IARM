@@ -1,0 +1,18 @@
+--extra-index-url https://download.pytorch.org/whl/cu118
+numpy
+tensorflow
+keras
+gensim  
+jsonschema 
+scikit-learn 
+scipy 
+tqdm 
+regex
+spacy
+pandas
+nltk
+gdown
+torch
+torchvision
+torchaudio
+
