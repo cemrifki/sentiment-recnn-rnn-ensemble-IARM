@@ -257,25 +257,27 @@ class PreProcessing:
     def prepare_data(self, data, batch_id, word_embeddings, rec_embeddings=None, batch_state=None):
         if batch_state is None:
             batch_state = BatchState()
-            
+
+        aspect_sequence=[]
+        limit = [batch_id*self.batch_size, (batch_id+1)*self.batch_size]
+        for item in self.aspects[limit[0]:limit[1]]:
+            temp=self.tokenizer.texts_to_sequences(item)
+            aspect_sequence.append(temp)
+        aspect_ = self.tokenizer.texts_to_sequences(list(self.aspect[limit[0]:limit[1]]))
+        train_temp=[]
+        j=0
+        for datam in data[limit[0]:limit[1]]:
+            train_temp.append([datam,aspect_sequence[j],aspect_[j],self.labels[limit[0]:limit[1]][j]])
+            j=j+1
+        training_data_x0=[]
+        training_data_x1=[]
+        training_data_y=[]
+        attention_mat2 =[]
+        attention_mat = []
+
         if self.args.recursive_module == "baseline":
             
-            aspect_sequence=[]
-            limit = [batch_id*self.batch_size, (batch_id+1)*self.batch_size]
-            for item in self.aspects[limit[0]:limit[1]]:
-                temp=self.tokenizer.texts_to_sequences(item)
-                aspect_sequence.append(temp)
-            aspect_ = self.tokenizer.texts_to_sequences(list(self.aspect[limit[0]:limit[1]]))
-            train_temp=[]
-            j=0
-            for datam in data[limit[0]:limit[1]]:
-                train_temp.append([datam,aspect_sequence[j],aspect_[j],self.labels[limit[0]:limit[1]][j]])
-                j=j+1
-            training_data_x0=[]
-            training_data_x1=[]
-            training_data_y=[]
-            attention_mat2 =[]
-            attention_mat = []
+
             for item1 in train_temp:
                 sent, aspects, aspect, sentiment = item1[0], item1[1], item1[2], item1[3]
                 att = []
@@ -337,31 +339,17 @@ class PreProcessing:
             att_var = torch.cat(attention_mat, dim =0 )
             return torch.cat(training_data_x0,dim=0), torch.cat(training_data_x1,dim=0), autograd.Variable(torch.LongTensor(to_categorical(training_data_y,3)) if not args.cuda else torch.cuda.LongTensor(to_categorical(training_data_y,3))), att2_var, att_var, batch_state
             
+        # Recursive module
         else:
-            aspect_sequence=[]
-            limit = [batch_id*self.batch_size, (batch_id+1)*self.batch_size]
-            for item in self.aspects[limit[0]:limit[1]]:
-                temp=self.tokenizer.texts_to_sequences(item)
-                aspect_sequence.append(temp)
-            aspect_ = self.tokenizer.texts_to_sequences(list(self.aspect[limit[0]:limit[1]]))
-            train_temp=[]
-            j=0
+            
+            j = 0
             rev_sep = []
             for datam in data[limit[0]:limit[1]]:
                 rev_sep.append(len(aspect_sequence[j]))
-                train_temp.append([datam,aspect_sequence[j],aspect_[j],self.labels[limit[0]:limit[1]][j]])
                 j=j+1
-            training_data_x0=[]
-            training_data_x1=[]
-            training_data_y=[]
-            attention_mat2 =[]
-            attention_mat = []
-            
 
-            lower_limit = limit[0]
             ind = 0
 
-            fnd_change_first = False
             for item1 in train_temp:
                 sent, aspects, aspect, sentiment = item1[0], item1[1], item1[2], item1[3]
 
