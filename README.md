@@ -7,6 +7,8 @@ Cem Rıfkı Aydın, Tunga Güngör. IEEE Access
 
 This approach proposes a novel neural network framework that combines recurrent and recursive neural models for aspect-based sentiment analysis. By using constituency and dependency parsers, we first divide each review into subreviews that include the sentiment information relevant to the corresponding aspect terms. After generating and training the recursive neural trees built from the parses of the subreviews, we feed their output into the recurrent model. 
 
+![Visual Summary](Architecture_Diagram.png)
+
 ## Requirements
 
 - --extra-index-url https://download.pytorch.org/whl/cu118
