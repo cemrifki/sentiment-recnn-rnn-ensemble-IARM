@@ -115,9 +115,6 @@ def read_asp_embeddings(file):
     Read aspect embeddings from a file.
     Returns a list of lists of floats.
     """
-    # embeddings = pd.read_csv(file)  # ["embeddings"]  # .apply(lambda x: [float(i) for i in x.strip("[]").split(",")]).tolist()
-
-    # return embeddings
 
     converted_data = []
 
@@ -126,14 +123,9 @@ def read_asp_embeddings(file):
         lines = f.readlines()
         lines = [line.strip().strip("'\"") for line in lines if line.strip()]  # Remove empty lines
         for row in lines:
-            # # Assuming each row has one column containing the string version of a list of lists
-            # string_data = row[0]  # Get the string
-            # print(row[0])
-            # print(row)
             actual_data = ast.literal_eval(row)  # Convert string to list
             converted_data.append(actual_data)
 
-    # print(converted_data)
     return converted_data
 
 
@@ -188,7 +180,7 @@ parser.add_argument('--dropout-p', type=float, default=0.5, metavar='DO1', help=
 parser.add_argument('--dropout-lstm', type=float, default=0.1, metavar='DO2', help='lstm dropout')
 parser.add_argument('--nb-words', type=int, default=500000000, metavar='NB', help='Number of words in the vocabulary')
 parser.add_argument('--dataset', default='Restaurants', metavar='D', help='Laptop or Restaurants')
-parser.add_argument('--embedding-file', default='glove.6B.300d.vec',  # '/home/cemrifki/Documents/Sentiment_Analysis/sentiment-recnn-rnn-ensemble-IARM/glove.6B.300d.vec', 
+parser.add_argument('--embedding-file', default='glove.6B.300d.vec',  # '/home/cemrifki/Sentiment_Analysis/sentiment-recnn-rnn-ensemble-IARM/glove.6B.300d.vec', 
                     metavar='EMB', help='The path to the embedding file')
 parser.add_argument('--recursive-module', type=str, default='dependency', metavar='RM',
                     choices=['dependency', 'constituency', 'baseline'], help='dependency or constituency')
@@ -228,10 +220,6 @@ test_data = csv_reader(files[1])
 # Preprocessing Class
 # ===========================
 
-
-# ===========================
-# Preprocessing Class (updated)
-# ===========================
 
 class PreProcessing:    
     """
@@ -538,32 +526,18 @@ class AttnRNN(nn.Module):
         alphas=[]
         for sent_asp in sents:
             embedded = self.dropout(sent_asp)
-            #print(len(self.hidden_sentence_gru[0]))
-            #print(len(self.hidden_sentence_gru[0][0]))
 
             output, hidden_sentence_gru = self.sentence_gru(embedded, self.hidden_sentence_gru)
-            #print attention_mat1.size()
             temp_attention_mat1 = attention_mat1.view(attention_mat1.size()[0],attention_mat1.size()[1],1).expand(-1,-1,output.size()[2])
-            #print temp_attention_mat1.size()
-            #sys.exit(1)
             output = torch.mul(output.permute(1,0,2),temp_attention_mat1)
             output = self.dropout2(output)
-            #print output.size()
-           # sys.exit(1)
             attn_weights = F.softmax(
                 self.attn(output.permute(1,0,2)), dim=0)
-            #print attn_weights.size()
-            #print attention_mat1.size()
-            #sys.exit(1)
             masked_attn_weights = torch.mul(attn_weights.squeeze().permute(1,0),attention_mat1)
-            #print masked_attn_weights.size()
             _sums = masked_attn_weights.sum(-1).unsqueeze(1).expand(-1,masked_attn_weights.size()[1])
-            #print _sums.size()
             attentions = masked_attn_weights.div(_sums).unsqueeze(1).permute(2,0,1)
             alphas.append(attentions.permute(1,2,0).unsqueeze(0))
 
-            #print attentions.permute(1,0,2).squeeze()[47].sum()
-            #print attn_weights.permute(1,0,2)
             attn_applied = torch.bmm(attentions.permute(1,2,0),
                                  output).squeeze()
             output = torch.relu(attn_applied)
@@ -592,8 +566,6 @@ class AttnRNN(nn.Module):
                     asp_proj = attn_applied_.unsqueeze(1)
         else:
             asp_proj = self.dimproj(attn_applied_).unsqueeze(1)
-        #print "Output size,", output.size()
-        #print "Aspect proj size,", asp_proj.size()
 
         output=output.permute(0,2,1)
 
@@ -604,7 +576,6 @@ class AttnRNN(nn.Module):
 
             attn_weights2 = F.softmax(
                     self.attn2(match), dim=0)
-            #print attn_weights
             self.hidden_aspect_write_gru=self.init_hidden(batch_size)
             output_w, hidden_aspect_write_gru = \
             self.aspect_write_gru(output.permute(2,0,1),self.hidden_aspect_write_gru)
@@ -614,37 +585,22 @@ class AttnRNN(nn.Module):
 
 
             masked_attn_weights2 = torch.mul(attn_weights2.squeeze().permute(1,0),attention_mat2)
-            #print masked_attn_weights.size()
             _sums2 = masked_attn_weights2.sum(-1).unsqueeze(1).expand(-1,masked_attn_weights2.size()[1])
-            #print _sums.size()
             attentions2 = masked_attn_weights2.div(_sums2).unsqueeze(1).permute(2,0,1)
 
-            #print output_w.size()
-            #print attn_weights.size()
-
-            #print attentions2.squeeze().permute(1,0)[0].sum()
 
             attn_applied = torch.bmm(attentions2.permute(1,2,0), output_w.permute(0,1,2)).squeeze()
 
             betas.append(attentions2.permute(1,2,0))
 
-            #print "attn_applied size", attn_applied.size()
 
             query = asp_proj.view(asp_proj.size()[0],asp_proj.size()[2])
-
-            #print "query size", query.size()
-
             final_output = torch.add(attn_applied, query)
-
-            #print final_output.size()
 
             final_output = torch.relu(final_output)
             asp_proj = final_output.unsqueeze(1)
-            #output = output_w.permute(1,2,0)
             output = output_w.permute(0,2,1)
-            #print"output size final-----", output.size()
         asp_proj = F.log_softmax(self.affine(asp_proj.squeeze()),dim=1)
-        #asp_proj = self.affine(asp_proj.squeeze())
         return asp_proj, betas, torch.cat(alphas,0)
 
     def init_hidden(self, batch_size):
