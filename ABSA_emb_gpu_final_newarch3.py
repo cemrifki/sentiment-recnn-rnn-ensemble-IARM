@@ -335,13 +335,9 @@ class PreProcessing:
                 attention_mat2.append(att2_tensor)
                 attention_mat.append(att_tensor)
 
-            att2_var = torch.cat(attention_mat2,dim=0)
-            att_var = torch.cat(attention_mat, dim =0 )
-            return torch.cat(training_data_x0,dim=0), torch.cat(training_data_x1,dim=0), autograd.Variable(torch.LongTensor(to_categorical(training_data_y,3)) if not args.cuda else torch.cuda.LongTensor(to_categorical(training_data_y,3))), att2_var, att_var, batch_state
-            
         # Recursive module
         else:
-            
+
             j = 0
             rev_sep = []
             for datam in data[limit[0]:limit[1]]:
@@ -468,11 +464,11 @@ class PreProcessing:
                 attention_mat2.append(att2_tensor)
                 attention_mat.append(att_tensor)
 
-            att2_var = torch.cat(attention_mat2,dim=0)
-            att_var = torch.cat(attention_mat, dim =0 )
-            res =  torch.cat(training_data_x0,dim=0), torch.cat(training_data_x1,dim=0), autograd.Variable(torch.LongTensor(to_categorical(training_data_y,3)) if not args.cuda else torch.cuda.LongTensor(to_categorical(training_data_y,3))),att2_var, att_var, batch_state
-            return res
-        
+        att2_var = torch.cat(attention_mat2, dim=0)
+        att_var = torch.cat(attention_mat, dim=0)
+        res =  torch.cat(training_data_x0,dim=0), torch.cat(training_data_x1, dim=0), autograd.Variable(torch.LongTensor(to_categorical(training_data_y, 3)) if not args.cuda else torch.cuda.LongTensor(to_categorical(training_data_y,3))), att2_var, att_var, batch_state
+        return res
+  
 # ===========================
 # Model Definition
 # ===========================
