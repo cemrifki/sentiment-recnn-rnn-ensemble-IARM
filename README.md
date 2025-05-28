@@ -75,9 +75,9 @@ If everything works smoothly without any errors, you can run the example usage g
 
 Examples:
 ```
-- python ABSA_emb_gpu_final_newarch3.py --recursive-module dependency --lr 0.001 --l2 0.0001 --dataset Laptop --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
-- python ABSA_emb_gpu_final_newarch3.py --recursive-module constituency --constit-epochs 2 --lr 0.001 --l2 0.0001 --dataset Restaurants --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
-- python ABSA_emb_gpu_final_newarch3.py --recursive-module baseline --lr 0.001 --l2 0.0001 --dataset Laptop --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
+- python3 ABSA_emb_gpu_final_newarch3.py --recursive-module dependency --lr 0.001 --l2 0.0001 --dataset Laptop --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
+- python3 ABSA_emb_gpu_final_newarch3.py --recursive-module constituency --constit-epochs 2 --lr 0.001 --l2 0.0001 --dataset Restaurants --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
+- python3 ABSA_emb_gpu_final_newarch3.py --recursive-module baseline --lr 0.001 --l2 0.0001 --dataset Laptop --hops 3 --epochs 7 --hidden-size 400 --output-size 300 --dropout-p 0.1 --dropout-lstm 0.2
 
 ```
 ## Citation
