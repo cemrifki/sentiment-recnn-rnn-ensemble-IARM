@@ -160,60 +160,6 @@ def index_word_embeddings(word_index, embeddings_index, embedding_dim):
     return embedding_matrix
 
 
-REC_EMBEDDING_DIM = 0
-FILES = []
-
-
-setup_environment()
-set_seed(42)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--no-cuda', action='store_true', default=False, help='does not use GPU')
-parser.add_argument('--lr', type=float, default=0.001, metavar='LR', help='learning rate')
-parser.add_argument('--l2', type=float, default=0.0001, metavar='L2', help='L2 regularization weight')
-parser.add_argument('--batch-size', type=int, default=25, metavar='BS', help='batch size')
-parser.add_argument('--epochs', type=int, default=30, metavar='E', help='number of epochs')
-parser.add_argument('--hops', type=int, default=10, metavar='H', help='number of hops')
-parser.add_argument('--hidden-size', type=int, default=400, metavar='HS', help='hidden size')
-parser.add_argument('--output-size', type=int, default=400, metavar='OS', help='output size')
-parser.add_argument('--dropout-p', type=float, default=0.5, metavar='DO1', help='embedding dropout')
-parser.add_argument('--dropout-lstm', type=float, default=0.1, metavar='DO2', help='lstm dropout')
-parser.add_argument('--nb-words', type=int, default=500000000, metavar='NB', help='Number of words in the vocabulary')
-parser.add_argument('--dataset', default='Restaurants', metavar='D', help='Laptop or Restaurants')
-parser.add_argument('--embedding-file', default='glove.6B.300d.vec',  # '/home/cemrifki/Sentiment_Analysis/sentiment-recnn-rnn-ensemble-IARM/glove.6B.300d.vec', 
-                    metavar='EMB', help='The path to the embedding file')
-parser.add_argument('--recursive-module', type=str, default='dependency', metavar='RM',
-                    choices=['dependency', 'constituency', 'baseline'], help='dependency or constituency')
-parser.add_argument('--dependency-epochs', type=int, default=5, metavar='DE', help='number of epochs for the dependency model')
-parser.add_argument('--constit-epochs', type=int, default=3, metavar='CE', help='number of epochs for the constituency model')
-
-args = parser.parse_args()
-
-args.cuda = not args.no_cuda and torch.cuda.is_available()
-device = "cuda" if args.cuda else "cpu"
-print("Using device:", device)
-ftype = torch.cuda.FloatTensor if args.cuda else torch.FloatTensor
-
-
-HIDDEN_DIM          = args.hidden_size
-OUTPUT_DIM          = args.output_size
-HOP_SIZE            = args.hops
-BATCH_SIZE          = args.batch_size
-NB_EPOCH            = args.epochs
-nb_words            = 500000000
-MAX_SEQUENCE_LENGTH = 77 if args.dataset=='Laptop' else 69
-MAX_ASPECTS         = 13
-MAX_LEN_ASPECT      = 5 if args.dataset=='Laptop' else 19
-EMBEDDING_DIM       = 300
-REC_EMBEDDING_DIM   = 50 if args.dataset[0:4].lower() == "rest" else 30 # 50
-REC_MODULE          = args.recursive_module
-
-if args.recursive_module == "baseline": REC_EMBEDDING_DIM = 0
-
-FILES = files = ["2014_" + args.dataset + "_train.csv", "2014_" + args.dataset + "_test.csv"]
-
-training_data = csv_reader(files[0])
-test_data = csv_reader(files[1])
 
 
 # ===========================
@@ -777,6 +723,66 @@ def download_stanford_corenlp():
         print(f"Using the existing Stanford CoreNLP library in the constituency folder.")
 
 
+# =====================================
+# Parsing Arguments and Hyperparameters
+# =====================================
+
+REC_EMBEDDING_DIM = 0
+FILES = []
+
+
+setup_environment()
+set_seed(42)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--no-cuda', action='store_true', default=False, help='does not use GPU')
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR', help='learning rate')
+parser.add_argument('--l2', type=float, default=0.0001, metavar='L2', help='L2 regularization weight')
+parser.add_argument('--batch-size', type=int, default=25, metavar='BS', help='batch size')
+parser.add_argument('--epochs', type=int, default=30, metavar='E', help='number of epochs')
+parser.add_argument('--hops', type=int, default=10, metavar='H', help='number of hops')
+parser.add_argument('--hidden-size', type=int, default=400, metavar='HS', help='hidden size')
+parser.add_argument('--output-size', type=int, default=400, metavar='OS', help='output size')
+parser.add_argument('--dropout-p', type=float, default=0.5, metavar='DO1', help='embedding dropout')
+parser.add_argument('--dropout-lstm', type=float, default=0.1, metavar='DO2', help='lstm dropout')
+parser.add_argument('--nb-words', type=int, default=500000000, metavar='NB', help='Number of words in the vocabulary')
+parser.add_argument('--dataset', default='Restaurants', metavar='D', help='Laptop or Restaurants')
+parser.add_argument('--embedding-file', default='glove.6B.300d.vec',  # '/home/cemrifki/Sentiment_Analysis/sentiment-recnn-rnn-ensemble-IARM/glove.6B.300d.vec', 
+                    metavar='EMB', help='The path to the embedding file')
+parser.add_argument('--recursive-module', type=str, default='dependency', metavar='RM',
+                    choices=['dependency', 'constituency', 'baseline'], help='dependency or constituency')
+parser.add_argument('--dependency-epochs', type=int, default=5, metavar='DE', help='number of epochs for the dependency model')
+parser.add_argument('--constit-epochs', type=int, default=3, metavar='CE', help='number of epochs for the constituency model')
+
+args = parser.parse_args()
+
+args.cuda = not args.no_cuda and torch.cuda.is_available()
+device = "cuda" if args.cuda else "cpu"
+print("Using device:", device)
+ftype = torch.cuda.FloatTensor if args.cuda else torch.FloatTensor
+
+
+HIDDEN_DIM          = args.hidden_size
+OUTPUT_DIM          = args.output_size
+HOP_SIZE            = args.hops
+BATCH_SIZE          = args.batch_size
+NB_EPOCH            = args.epochs
+nb_words            = 500000000
+MAX_SEQUENCE_LENGTH = 77 if args.dataset=='Laptop' else 69
+MAX_ASPECTS         = 13
+MAX_LEN_ASPECT      = 5 if args.dataset=='Laptop' else 19
+EMBEDDING_DIM       = 300
+REC_EMBEDDING_DIM   = 50 if args.dataset[0:4].lower() == "rest" else 30 # 50
+REC_MODULE          = args.recursive_module
+
+if args.recursive_module == "baseline": REC_EMBEDDING_DIM = 0
+
+FILES = files = ["2014_" + args.dataset + "_train.csv", "2014_" + args.dataset + "_test.csv"]
+
+training_data = csv_reader(files[0])
+test_data = csv_reader(files[1])
+
+
 
 # ===========================
 # Main Entry Point
@@ -895,7 +901,7 @@ def main():
         tr_recurs_asp_embs = None
         test_recurs_asp_embs = None
     else:
-        print("Invalid recursive module specified. Please choose 'dependency' or 'constituency'.") 
+        print("Invalid recursive module specified. Please choose 'dependency', 'constituency', or 'baseline'.") 
         sys.exit(1)
 
     onea = [i for i, (s, a, aa, l) in enumerate(test_data) if len(a) == 1]
