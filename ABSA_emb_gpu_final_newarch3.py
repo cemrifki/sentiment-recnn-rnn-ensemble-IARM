@@ -802,7 +802,7 @@ def main():
         print("Dependency module selected.")        
         sys.path.append(os.path.join("dependency", "treehopper"))
 
-        # Step 1: Import all the modules, related to the dependency mode. Train the dependency trees separately and get their (root) embeddings.        
+        # Import all the modules, related to the dependency mode. Train the dependency trees separately and get their (root) embeddings.        
         import dep_files_generator_lexicon
         import train 
         import evaluate 
@@ -847,8 +847,14 @@ def main():
         test_recurs_asp_embs = read_asp_embeddings(test_asp_emb_file)
 
     elif args.recursive_module == "constituency":
+        # Import the required consituency modules
+        print("Constituency module selected.") 
+        sys.path.append("constituency")
+        
         import subprocess
-
+        import constit_parsing_aspect_gr_extr
+        import RecNN
+        
         try:
             subprocess.run(['java', '-version'], check=True, capture_output=True)
             print("Java is installed.")
@@ -856,15 +862,12 @@ def main():
             print("Java is not installed or not in PATH.")
             sys.exit(1)
 
-        # Download the Stanford CoreNLP library for constituency parsing, if you have already not done it
+        # Downloads the Stanford CoreNLP library for constituency parsing, if it has not already been performed.
         download_stanford_corenlp()
         # Set the CLASSPATH environment variable to include the Stanford CoreNLP library
         os.environ['CLASSPATH'] = "constituency/stanford-corenlp-4.5.8/*"
 
-        print("Constituency module selected.") 
-        sys.path.append("constituency")
-        import constit_parsing_aspect_gr_extr
-        import RecNN
+
         # Call the module constit_parsing_aspect_gr_extr
         print("Running constit_parsing_aspect_gr_extr.py and generating PennTree files...")
         
