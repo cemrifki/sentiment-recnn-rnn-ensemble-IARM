@@ -1,5 +1,15 @@
+"""
+This is the main module that performs aspect-based sentiment analysis (ABSA). In addition to the recurrent-only IARM model, 
+our approach also integrates recursive neural networks, combining both architectures. For the recursive component, users can 
+choose between dependency and constituency parsing, for which separate parsing trees are trained.
+
+
+Author: Cem Rifki Aydin
+Date: 10.03.2020
+
+"""
+
 import ast
-import csv
 import re
 import os
 import sys
@@ -44,9 +54,6 @@ class BatchState:
         self.cnt_asp_gr = 0
         self.tmp_last = 0
         self.is_tmp_last = False
-
-
-
 
 
 # ===========================
@@ -158,8 +165,6 @@ def index_word_embeddings(word_index, embeddings_index, embedding_dim):
         if embedding_vector is not None:
             embedding_matrix[i] = embedding_vector
     return embedding_matrix
-
-
 
 
 # ===========================
@@ -288,7 +293,7 @@ class PreProcessing:
             rev_sep = []
             for datam in data[limit[0]:limit[1]]:
                 rev_sep.append(len(aspect_sequence[j]))
-                j=j+1
+                j = j+1
 
             ind = 0
 
@@ -370,13 +375,9 @@ class PreProcessing:
 
                 aspect1 = aspect1.expand(len(sent),-1)
 
-
                 non_match_words = torch.FloatTensor([[0.0] * rec_len] * (voc_len - sent_len))
                 match_words = torch.FloatTensor([[1.0] * rec_len] * sent_len)
                 rec_expansion = torch.cat((non_match_words, match_words), dim=0)            
-
-
-
 
                 sepr = []
                 att2 = []
@@ -386,7 +387,6 @@ class PreProcessing:
 
                 cnt_all_asps = 0
 
-                
                 for item in aspects1: 
                     
                     it_rec_asp_emb = rec_asp_embs_[cnt_all_asps]
@@ -730,7 +730,6 @@ def download_stanford_corenlp():
 REC_EMBEDDING_DIM = 0
 FILES = []
 
-
 setup_environment()
 set_seed(42)
 
@@ -783,22 +782,14 @@ training_data = csv_reader(files[0])
 test_data = csv_reader(files[1])
 
 
-
 # ===========================
 # Main Entry Point
 # ===========================
 
 def main():
-
-    """
-    Main entry point for ABSA training and evaluation.
-    """
-
     # The URL of the GloVe embedding file (i.e., glove.6B.300d.vec)
     drive_url_for_glove = 'https://drive.google.com/uc?id=1JikYQspoDIxlfhEdv2ry8QkWgZLMrFXZ'
     output_path = args.embedding_file 
-
-    
 
     if os.path.isfile(args.embedding_file):
         print(f"Using existing embedding file: {args.embedding_file}")
@@ -806,23 +797,19 @@ def main():
         print(f"Downloading the GloVe embedding file to the path {args.embedding_file}.")
         gdown.download(drive_url_for_glove, output_path, quiet=False)
 
-
-    
     # Recursive module logic (dependency/constituency/baseline)
     if args.recursive_module == "dependency":
         print("Dependency module selected.")        
         sys.path.append(os.path.join("dependency", "treehopper"))
-        # Step 1: Import the dependency files generator module and train the model
-        
+
+        # Step 1: Import all the modules, related to the dependency mode. Train the dependency trees separately and get their (root) embeddings.        
         import dep_files_generator_lexicon
         import train 
-        dep_files_generator_lexicon.main([deepcopy(training_data), test_data])
-
-        # Step 2: Import the evaluate module
         import evaluate 
 
+        # Generate dependency files (related to dependency relations, sentiments, etc.)
+        dep_files_generator_lexicon.main([deepcopy(training_data), test_data])
         train.main(parser)  # Call the main() method of train.py    
-
 
         # Base models directory
         base_dir = os.path.join("dependency", "treehopper", "models", "saved_model")
@@ -845,18 +832,16 @@ def main():
             latest_pth = max(pth_files, key=os.path.getmtime)
             print(f"Latest .pth file: {latest_pth}")
 
-        # Step 4: Simulate command-line arguments
+        # Simulate command-line arguments
         sys.argv = ["evaluate.py", "--model_path", latest_pth]
 
-        # Step 5: Call the main() method
-        evaluate.main([deepcopy(training_data), test_data])  # Call the main() method of evaluate.py
+        # Call the main() method
+        evaluate.main([deepcopy(training_data), test_data])  
 
         corresp_asp_emb_files = {"train": "2014_" + args.dataset + "_train_dim_" + str(REC_EMBEDDING_DIM) + "_" + args.recursive_module[:3] +"_asp_embs.csv", "test": "2014_" + args.dataset + "_test_dim_"  + str(REC_EMBEDDING_DIM) + "_" + args.recursive_module[:3] + "_asp_embs.csv"}
 
-
         tr_asp_emb_file = corresp_asp_emb_files["train"]
         tr_recurs_asp_embs = read_asp_embeddings(tr_asp_emb_file)
-
 
         test_asp_emb_file = corresp_asp_emb_files["test"]
         test_recurs_asp_embs = read_asp_embeddings(test_asp_emb_file)
@@ -871,7 +856,7 @@ def main():
             print("Java is not installed or not in PATH.")
             sys.exit(1)
 
-        # 1. Stanford CoreNLP library for constituency parsing
+        # Download the Stanford CoreNLP library for constituency parsing, if you have already not done it
         download_stanford_corenlp()
         # Set the CLASSPATH environment variable to include the Stanford CoreNLP library
         os.environ['CLASSPATH'] = "constituency/stanford-corenlp-4.5.8/*"
@@ -880,11 +865,11 @@ def main():
         sys.path.append("constituency")
         import constit_parsing_aspect_gr_extr
         import RecNN
-        # 2. Call constit_parsing_aspect_gr_extr.py
+        # Call the module constit_parsing_aspect_gr_extr
         print("Running constit_parsing_aspect_gr_extr.py and generating PennTree files...")
         
         constit_parsing_aspect_gr_extr.main(training_data, test_data)
-        # 3. Call RecNN.py
+        # Call the RecNN module
         print("Running RecNN.py...")
         RecNN.main([training_data, test_data])
 
@@ -896,6 +881,7 @@ def main():
         test_asp_emb_file = corresp_asp_emb_files["test"]
         test_recurs_asp_embs = read_asp_embeddings(test_asp_emb_file)
 
+    # If none of the additional recursive embeddings are going to be used, just rely on the baseline IARM model.
     elif args.recursive_module == "baseline":
                 
         tr_recurs_asp_embs = None
